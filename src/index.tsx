@@ -25,6 +25,7 @@ import {
   ViewStyle,
   NativeEventSubscription,
   EmitterSubscription,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   PanGestureHandler,
@@ -770,10 +771,20 @@ const ModalizeBase = (
       return React.cloneElement(tag, { ...opts });
     }
 
+    /* A portal still bubbles event to its parent, its still in the same react tree, so need to 
+    wrap modal with TouchableWithoutFeedback to prevent from bubbling to parent
+    https://jwwnz.medium.com/react-portals-and-event-bubbling-8df3e35ca3f1 */
     return (
-      <Animated.ScrollView {...scrollViewProps} {...opts}>
-        {children}
-      </Animated.ScrollView>
+      <TouchableWithoutFeedback
+        onPress={e => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <Animated.ScrollView {...scrollViewProps} {...opts}>
+          {children}
+        </Animated.ScrollView>
+      </TouchableWithoutFeedback>
     );
   };
 
@@ -825,19 +836,29 @@ const ModalizeBase = (
               enabled={closeOnOverlayTap !== undefined ? closeOnOverlayTap : panGestureEnabled}
               onHandlerStateChange={handleOverlay}
             >
-              <Animated.View
-                style={[
-                  s.overlay__background,
-                  overlayStyle,
-                  {
-                    opacity: overlay.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 1],
-                    }),
-                  },
-                ]}
-                pointerEvents={pointerEvents}
-              />
+              {/* A portal still bubbles event to its parent, its still in the same react tree, so need to 
+                wrap modal with TouchableWithoutFeedback to prevent from bubbling to parent
+                https://jwwnz.medium.com/react-portals-and-event-bubbling-8df3e35ca3f1 */}
+              <TouchableWithoutFeedback
+                onPress={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <Animated.View
+                  style={[
+                    s.overlay__background,
+                    overlayStyle,
+                    {
+                      opacity: overlay.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 1],
+                      }),
+                    },
+                  ]}
+                  pointerEvents={pointerEvents}
+                />
+              </TouchableWithoutFeedback>
             </TapGestureHandler>
           )}
         </Animated.View>
